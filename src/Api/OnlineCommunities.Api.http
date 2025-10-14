@@ -1,0 +1,6 @@
+@OnlineCommunities.Api_HostAddress = http://localhost:5189
+
+GET {{OnlineCommunities.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
