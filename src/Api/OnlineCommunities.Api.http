@@ -1,6 +1,34 @@
 @OnlineCommunities.Api_HostAddress = http://localhost:5189
+@ENTRA_TOKEN = your-entra-external-id-jwt-token-here
 
-GET {{OnlineCommunities.Api_HostAddress}}/weatherforecast/
+# Test token validation endpoint (should return 401 Unauthorized without token)
+GET {{OnlineCommunities.Api_HostAddress}}/api/auth/validate-token
+Accept: application/json
+
+###
+
+# Test token validation endpoint with Entra External ID Bearer token (replace @ENTRA_TOKEN with actual token)
+GET {{OnlineCommunities.Api_HostAddress}}/api/auth/validate-token
+Authorization: Bearer {{ENTRA_TOKEN}}
+Accept: application/json
+
+###
+
+# Get current user profile (requires valid Entra External ID token)
+GET {{OnlineCommunities.Api_HostAddress}}/api/auth/me
+Authorization: Bearer {{ENTRA_TOKEN}}
+Accept: application/json
+
+###
+
+# Check authentication status (public endpoint)
+GET {{OnlineCommunities.Api_HostAddress}}/api/auth/status
+Accept: application/json
+
+###
+
+# Health check (no auth required)
+GET {{OnlineCommunities.Api_HostAddress}}/health
 Accept: application/json
 
 ###

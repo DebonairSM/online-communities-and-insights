@@ -5,15 +5,12 @@ using OnlineCommunities.Api.Authorization.Handlers;
 using OnlineCommunities.Api.Authorization.Requirements;
 using OnlineCommunities.Application.Interfaces;
 using OnlineCommunities.Application.Services.Identity;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // ============================================================================
-// AUTHENTICATION - Dual JWT Bearer (Entra External ID + Legacy) + OAuth Social Login
+// AUTHENTICATION - Microsoft Entra External ID Only
 // ============================================================================
-var jwtSecretKey = builder.Configuration["JwtSettings:SecretKey"] 
-    ?? throw new InvalidOperationException("JwtSettings:SecretKey must be configured");
 
 // Get Entra External ID configuration
 var entraInstance = builder.Configuration["AzureAd:Instance"];
@@ -21,68 +18,30 @@ var entraTenantId = builder.Configuration["AzureAd:TenantId"];
 var entraClientId = builder.Configuration["AzureAd:ClientId"];
 var entraAudience = builder.Configuration["AzureAd:Audience"];
 
+if (string.IsNullOrEmpty(entraInstance) || string.IsNullOrEmpty(entraTenantId) || string.IsNullOrEmpty(entraAudience))
+{
+    throw new InvalidOperationException("AzureAd configuration is required: Instance, TenantId, and Audience must be set");
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-// Entra External ID JWT Bearer - for API access after Entra authentication
-.AddJwtBearer("Entra", options =>
+.AddJwtBearer(options =>
 {
-    if (!string.IsNullOrEmpty(entraInstance) && !string.IsNullOrEmpty(entraTenantId))
-    {
-        options.Authority = $"{entraInstance}{entraTenantId}/v2.0";
-        options.Audience = entraAudience;
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = options.Authority,
-            ValidAudiences = new[] { entraAudience },
-            ClockSkew = TimeSpan.FromMinutes(5) // Allow some clock skew for Entra
-        };
-    }
-})
-// Legacy JWT Bearer - for backward compatibility during migration period
-.AddJwtBearer("Legacy", options =>
-{
+    options.Authority = $"{entraInstance}{entraTenantId}/v2.0";
+    options.Audience = entraAudience;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-        ValidAudience = builder.Configuration["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
-        ClockSkew = TimeSpan.Zero
+        ValidIssuer = options.Authority,
+        ValidAudiences = new[] { entraAudience },
+        ClockSkew = TimeSpan.FromMinutes(5) // Allow some clock skew for Entra
     };
-})
-// Google OAuth
-.AddGoogle(options =>
-{
-    options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "";
-    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "";
-    options.CallbackPath = "/api/auth/callback/Google";
-    options.Scope.Add("profile");
-    options.Scope.Add("email");
-})
-// GitHub OAuth
-.AddGitHub(options =>
-{
-    options.ClientId = builder.Configuration["Authentication:GitHub:ClientId"] ?? "";
-    options.ClientSecret = builder.Configuration["Authentication:GitHub:ClientSecret"] ?? "";
-    options.CallbackPath = "/api/auth/callback/GitHub";
-    options.Scope.Add("user:email");
-})
-// Microsoft Personal Accounts (Outlook, Hotmail) - NOT Entra ID!
-.AddMicrosoftAccount(options =>
-{
-    options.ClientId = builder.Configuration["Authentication:Microsoft:ClientId"] ?? "";
-    options.ClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"] ?? "";
-    options.CallbackPath = "/api/auth/callback/Microsoft";
 });
 
 // ============================================================================
-// AUTHORIZATION - Custom Policies for Multi-Tenant SaaS with Dual Authentication
+// AUTHORIZATION - Custom Policies for Multi-Tenant SaaS
 // ============================================================================
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy("RequireModerator", policy =>
@@ -92,12 +51,11 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy("RequireTenantMembership", policy =>
         policy.Requirements.Add(new TenantMembershipRequirement()));
 
-// Configure default policy to accept both Entra and Legacy tokens during migration
+// Configure default policy to require authenticated users
 builder.Services.Configure<AuthorizationOptions>(options =>
 {
     options.DefaultPolicy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
-        .AddAuthenticationSchemes("Entra", "Legacy")
         .Build();
 });
 
@@ -109,9 +67,6 @@ builder.Services.AddScoped<IAuthorizationHandler, ResourceOwnerHandler>();
 // ============================================================================
 // APPLICATION SERVICES
 // ============================================================================
-// External Authentication Service - Handles OAuth social login
-builder.Services.AddScoped<IExternalAuthService, ExternalAuthService>();
-
 // Entra User Sync Service - Handles JIT provisioning and bidirectional sync
 builder.Services.AddScoped<IEntraUserSyncService, EntraUserSyncService>();
 
@@ -163,7 +118,7 @@ app.UseHttpsRedirection();
 // app.UseMiddleware<ExceptionHandlingMiddleware>();  // Global error handling
 
 // CRITICAL: Authentication must come before Authorization
-app.UseAuthentication();  // Validates JWT tokens + handles OAuth redirects
+app.UseAuthentication();  // Validates Entra External ID JWT tokens
 app.UseAuthorization();   // Checks policies and requirements
 
 app.MapControllers();

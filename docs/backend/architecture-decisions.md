@@ -55,8 +55,8 @@ CREATE TABLE Communities (
 
 **Benefits**: MFA support, breach protection, compliance features, reduced maintenance.
 
-## ADR-007: Self-Issued JWT Tokens
+## ADR-007: Microsoft Entra External ID Token Validation
 
-**Decision**: Always generate our own JWT tokens regardless of authentication provider.
+**Decision**: Use Microsoft Entra External ID issued JWT tokens exclusively for authentication.
 
-**Rationale**: Unified token format, application-specific claims (tenant, roles), consistent validation.
+**Rationale**: Enterprise-grade security, compliance certifications (SOC 2, FedRAMP, ISO 27001), managed token lifecycle, and built-in threat protection. Custom claims (tenant, roles) are enriched via API Connector during token issuance.

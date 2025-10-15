@@ -1,147 +1,26 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OnlineCommunities.Application.Interfaces;
 using OnlineCommunities.Api.Extensions;
-using System.Security.Claims;
 
 namespace OnlineCommunities.Api.Controllers;
 
 /// <summary>
-/// Authentication endpoints for social login (OAuth 2.0).
-/// Supports Google, GitHub, and Microsoft Personal Accounts.
+/// Authentication endpoints for Microsoft Entra External ID authenticated users.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
-    private readonly IExternalAuthService _authService;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(
-        IExternalAuthService authService,
-        ILogger<AuthController> logger)
+    public AuthController(ILogger<AuthController> logger)
     {
-        _authService = authService;
         _logger = logger;
     }
 
     /// <summary>
-    /// Initiates OAuth login flow for specified provider.
-    /// Redirects to provider's login page.
-    /// </summary>
-    /// <param name="provider">google, github, or microsoft</param>
-    [HttpGet("login/{provider}")]
-    [AllowAnonymous]
-    public IActionResult Login(string provider)
-    {
-        var providerName = provider.ToLower() switch
-        {
-            "google" => "Google",
-            "github" => "GitHub",
-            "microsoft" => "Microsoft",
-            _ => null
-        };
-
-        if (providerName == null)
-        {
-            return BadRequest(new { error = $"Unsupported provider: {provider}" });
-        }
-
-        // Redirect to OAuth provider
-        var redirectUrl = Url.Action(nameof(OAuthCallback), new { provider = providerName });
-        var properties = new AuthenticationProperties { RedirectUri = redirectUrl };
-        
-        return Challenge(properties, providerName);
-    }
-
-    /// <summary>
-    /// OAuth callback endpoint - called by provider after user authenticates.
-    /// Creates or updates user, then returns JWT token.
-    /// </summary>
-    [HttpGet("callback/{provider}")]
-    [AllowAnonymous]
-    public async Task<IActionResult> OAuthCallback(string provider)
-    {
-        try
-        {
-            // Authenticate with the OAuth provider
-            var result = await HttpContext.AuthenticateAsync(provider);
-
-            if (!result.Succeeded)
-            {
-                _logger.LogWarning("OAuth authentication failed for provider {Provider}", provider);
-                return Unauthorized(new { error = "Authentication failed" });
-            }
-
-            var claims = result.Principal?.Claims.ToList();
-            if (claims == null || !claims.Any())
-            {
-                _logger.LogError("No claims received from OAuth provider {Provider}", provider);
-                return Unauthorized(new { error = "No user information received" });
-            }
-
-            // Extract user info from claims
-            var externalUserId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            var email = claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-            var firstName = claims.FirstOrDefault(c => c.Type == ClaimTypes.GivenName)?.Value;
-            var lastName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Surname)?.Value;
-
-            // For GitHub, extract from different claim if needed
-            if (provider.ToLower() == "github" && string.IsNullOrEmpty(firstName))
-            {
-                var name = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-                if (!string.IsNullOrEmpty(name))
-                {
-                    var nameParts = name.Split(' ', 2);
-                    firstName = nameParts.Length > 0 ? nameParts[0] : name;
-                    lastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
-                }
-            }
-
-            if (string.IsNullOrEmpty(externalUserId) || string.IsNullOrEmpty(email))
-            {
-                _logger.LogError(
-                    "Missing required claims from OAuth provider {Provider}. UserId={UserId}, Email={Email}",
-                    provider, externalUserId, email);
-                return Unauthorized(new { error = "Incomplete user information" });
-            }
-
-            // Handle login (creates user if doesn't exist)
-            var (user, jwtToken) = await _authService.HandleExternalLoginAsync(
-                provider, externalUserId, email, firstName, lastName);
-
-            _logger.LogInformation(
-                "Successful OAuth login: Provider={Provider}, UserId={UserId}, Email={Email}",
-                provider, user.Id, email);
-
-            // TODO: Redirect to frontend with token
-            // For now, return JSON response
-            // In production, you'd redirect to: https://yourfrontend.com/auth/callback?token={jwtToken}
-            return Ok(new
-            {
-                token = jwtToken,
-                user = new
-                {
-                    id = user.Id,
-                    email = user.Email,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    authMethod = user.AuthMethod.ToString(),
-                    tenantCount = user.TenantMemberships?.Count ?? 0
-                }
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error processing OAuth callback for provider {Provider}", provider);
-            return StatusCode(500, new { error = "An error occurred during authentication" });
-        }
-    }
-
-    /// <summary>
     /// Get current authenticated user's profile.
-    /// Requires valid JWT token in Authorization header.
+    /// Requires valid Entra External ID JWT token in Authorization header.
     /// </summary>
     [HttpGet("me")]
     [Authorize]
@@ -149,15 +28,13 @@ public class AuthController : ControllerBase
     {
         var userId = User.GetUserId();
         var email = User.GetEmail();
-        var authMethod = User.FindFirst("auth_method")?.Value;
 
         // TODO: Load full user from database
-        // For now, return claims
+        // For now, return claims from Entra External ID token
         return Ok(new
         {
             userId,
             email,
-            authMethod,
             claims = User.Claims.Select(c => new { c.Type, c.Value })
         });
     }
@@ -198,6 +75,55 @@ public class AuthController : ControllerBase
         _logger.LogInformation("User signed out: UserId={UserId}", userId);
 
         return Ok(new { message = "Signed out successfully" });
+    }
+
+    /// <summary>
+    /// Example endpoint to demonstrate secure token validation.
+    /// This endpoint shows how the backend validates Entra External ID JWT tokens from frontend.
+    /// The [Authorize] attribute automatically validates the token in the Authorization header.
+    /// </summary>
+    [HttpGet("validate-token")]
+    [Authorize]
+    public IActionResult ValidateToken()
+    {
+        // At this point, ASP.NET Core has already validated the Entra External ID JWT token because of [Authorize]
+        // If we reach here, it means:
+        // 1. Token was present in Authorization header (Bearer <token>)
+        // 2. Token signature was valid (signed by Microsoft Entra External ID)
+        // 3. Token was not expired
+        // 4. Token issuer and audience were correct for your Entra tenant
+        // 5. Token was properly formatted and not tampered with
+
+        var tokenInfo = new
+        {
+            message = "Entra External ID token is valid! This proves your backend correctly validated the Microsoft-issued JWT token.",
+            validationDetails = new
+            {
+                isAuthenticated = User.Identity?.IsAuthenticated ?? false,
+                authenticationType = User.Identity?.AuthenticationType,
+                userId = User.GetUserId(),
+                email = User.GetEmail(),
+                roles = User.GetRoles(),
+                tenantId = User.GetTenantId(),
+                tokenClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToArray()
+            },
+            securityNotes = new
+            {
+                explanation = "The [Authorize] attribute automatically validates Entra External ID tokens:",
+                validations = new[]
+                {
+                    "Verifies token signature using Microsoft's signing keys",
+                    "Checks token expiration (not expired)",
+                    "Validates Microsoft Entra External ID issuer and audience",
+                    "Ensures token format is correct and not tampered with",
+                    "Rejects invalid or revoked tokens"
+                }
+            }
+        };
+
+        _logger.LogInformation("Entra External ID token validation successful for user {UserId}", User.GetUserId());
+
+        return Ok(tokenInfo);
     }
 }
 

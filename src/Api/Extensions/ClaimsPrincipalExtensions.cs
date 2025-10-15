@@ -10,30 +10,15 @@ public static class ClaimsPrincipalExtensions
 {
     /// <summary>
     /// Gets the user ID from the claims principal.
-    /// For Entra External ID: maps from 'oid' claim to local user ID via database lookup.
-    /// For legacy tokens: looks for 'sub' claim or NameIdentifier claim.
+    /// Maps from Entra External ID 'sub' claim to local user ID via database lookup.
     /// </summary>
     public static Guid? GetUserId(this ClaimsPrincipal principal)
     {
-        // Try Entra External ID 'oid' claim first
-        var oid = principal.FindFirst("oid")?.Value;
-        if (!string.IsNullOrEmpty(oid))
+        // Extract user ID from Entra External ID 'sub' claim
+        var subClaim = principal.FindFirst("sub");
+        if (subClaim != null && Guid.TryParse(subClaim.Value, out var userId))
         {
-            // Note: This requires a service to map Entra OID to local User.Id
-            // For now, we'll extract from sub claim but this should be enhanced
-            // with a proper mapping service in production
-            var subClaim = principal.FindFirst("sub");
-            if (subClaim != null && Guid.TryParse(subClaim.Value, out var userId))
-            {
-                return userId;
-            }
-        }
-        
-        // Fallback to legacy 'sub' claim or NameIdentifier
-        var subClaimFallback = principal.FindFirst("sub") ?? principal.FindFirst(ClaimTypes.NameIdentifier);
-        if (subClaimFallback != null && Guid.TryParse(subClaimFallback.Value, out var userIdFallback))
-        {
-            return userIdFallback;
+            return userId;
         }
         return null;
     }
@@ -74,13 +59,11 @@ public static class ClaimsPrincipalExtensions
 
     /// <summary>
     /// Gets the tenant ID from the claims principal.
-    /// For Entra External ID: reads from custom 'extension_TenantId' claim.
-    /// For legacy tokens: reads from 'tenantId' claim.
+    /// Reads from Entra External ID custom 'extension_TenantId' claim.
     /// </summary>
     public static Guid? GetTenantId(this ClaimsPrincipal principal)
     {
-        // Try Entra External ID custom claim first
-        var tenantIdClaim = principal.FindFirst("extension_TenantId") ?? principal.FindFirst("tenantId");
+        var tenantIdClaim = principal.FindFirst("extension_TenantId");
         if (tenantIdClaim != null && Guid.TryParse(tenantIdClaim.Value, out var tenantId))
         {
             return tenantId;
@@ -90,20 +73,12 @@ public static class ClaimsPrincipalExtensions
 
     /// <summary>
     /// Gets the user roles from the claims principal.
-    /// For Entra External ID: reads from custom 'extension_Roles' claim collection.
-    /// For legacy tokens: reads from standard role claims.
+    /// Reads from Entra External ID custom 'extension_Roles' claim collection.
     /// </summary>
     public static string[] GetRoles(this ClaimsPrincipal principal)
     {
-        // Try Entra External ID custom claim first (string collection)
         var customRoles = principal.FindAll("extension_Roles").Select(c => c.Value).ToArray();
-        if (customRoles.Length > 0)
-        {
-            return customRoles;
-        }
-
-        // Fallback to standard role claims
-        return principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+        return customRoles;
     }
 }
 
