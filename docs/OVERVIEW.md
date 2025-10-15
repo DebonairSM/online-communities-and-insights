@@ -291,4 +291,3 @@ Refer to domain-specific context documents in `docs/contexts/` for detailed arch
 - `integrations-extensibility.md` - Research tool exports, transcription, qual software integration
 - `tenant-management.md` - Brand community lifecycle, campaign billing, moderator assignment
 - `project-kickstart.md` - C Space-style platform implementation roadmap
-
