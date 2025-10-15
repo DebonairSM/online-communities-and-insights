@@ -29,6 +29,12 @@ public interface IUserRepository : IRepository<User>
     Task<User?> GetByEntraIdSubjectAsync(string entraIdSubject);
 
     /// <summary>
+    /// Find a user by their Entra External ID object identifier (OID).
+    /// Used for mapping Entra External ID users to local user records.
+    /// </summary>
+    Task<User?> GetByEntraOidAsync(string entraOid);
+
+    /// <summary>
     /// Get all tenants that a user belongs to.
     /// </summary>
     Task<IEnumerable<Guid>> GetUserTenantIdsAsync(Guid userId);

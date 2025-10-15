@@ -33,5 +33,11 @@ public interface ITenantMembershipRepository : IRepository<TenantMembership>
     /// Get all role names for a user in a tenant.
     /// </summary>
     Task<List<string>> GetUserRolesInTenantAsync(Guid userId, Guid tenantId);
+
+    /// <summary>
+    /// Get the user's primary tenant membership (first active membership).
+    /// Used for token enrichment to determine primary tenant context.
+    /// </summary>
+    Task<TenantMembership?> GetPrimaryForUserAsync(Guid userId);
 }
 

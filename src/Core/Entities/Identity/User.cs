@@ -63,9 +63,11 @@ public class User : BaseEntity
     public string? EntraTenantId { get; set; }
 
     /// <summary>
-    /// The subject identifier from Entra ID (Microsoft Entra ID 'sub' claim).
-    /// Only populated when AuthMethod = EntraId.
-    /// Combined with EntraTenantId, this uniquely identifies the enterprise user.
+    /// The subject identifier from Entra ID (Microsoft Entra ID 'sub' claim) or 
+    /// the object identifier (OID) from Entra External ID.
+    /// Populated when AuthMethod = EntraId or EntraExternalId.
+    /// For EntraId: Combined with EntraTenantId, this uniquely identifies the enterprise user.
+    /// For EntraExternalId: This is the OID claim used for mapping to local user records.
     /// </summary>
     public string? EntraIdSubject { get; set; }
 

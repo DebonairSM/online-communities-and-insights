@@ -36,6 +36,13 @@ public enum AuthenticationMethod
     /// User authenticates with their organization's work account.
     /// Supports multi-tenant Azure AD scenarios.
     /// </summary>
-    EntraId = 5
+    EntraId = 5,
+    
+    /// <summary>
+    /// Microsoft Entra External ID (CIAM) for customer authentication.
+    /// Users authenticate via Entra External ID with social providers or email/password.
+    /// Tokens include custom claims for tenant context and roles.
+    /// </summary>
+    EntraExternalId = 6
 }
 

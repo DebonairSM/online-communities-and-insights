@@ -17,37 +17,35 @@ Welcome to the documentation for the **Insight Community Platform** - a comprehe
 ### Setup Guides  
 - **[Development Environment](setup/development-environment.md)** - Local development setup
 - **[Phase 0: Foundation](implementation/phase-0-foundation.md)** - Core architecture setup
-- **[Social Login Setup](implementation/social-login-setup.md)** - OAuth configuration guide
+- **[Social Login Setup](backend/implementation/social-login-setup.md)** - OAuth configuration guide
 
 ## 🏗️ Architecture
 
-### Core Architecture
-- **[Backend Architecture](contexts/backend-architecture.md)** - .NET services, APIs, and data strategy
-- **[Frontend Architecture](contexts/frontend-architecture.md)** - React SPA, components, and state management  
-- **[Mobile App Architecture](contexts/mobile-app-architecture.md)** - React Native app for participants
-- **[Infrastructure & DevOps](contexts/infrastructure-devops.md)** - Azure deployment and operations
+### Backend
+- **[Backend Architecture](backend/backend-architecture.md)** - .NET services, APIs, and data strategy
+- **[Domain Model](backend/domain-model.md)** - Business entities and relationships
+- **[Security Model](backend/security-model.md)** - Authentication, authorization, and compliance
+- **[Infrastructure & DevOps](backend/infrastructure-devops.md)** - Azure deployment and operations
+- **[Analytics & Insights](backend/analytics-insights.md)** - Data pipeline and reporting
+- **[Tech Stack](backend/TechStack.context.md)** - Complete technology choices and packages
+- **[Integrations & Extensibility](backend/integrations-extensibility.md)** - External system integration  
+- **[Tenant Management](backend/tenant-management.md)** - Multi-tenant SaaS considerations
 
-### Domain Design
-- **[Domain Model](contexts/domain-model.md)** - Business entities and relationships
-- **[Security Model](contexts/security-model.md)** - Authentication, authorization, and compliance
-- **[Analytics & Insights](contexts/analytics-insights.md)** - Data pipeline and reporting
-
-### Technology Stack
-- **[Tech Stack](contexts/TechStack.context.md)** - Complete technology choices and packages
-- **[Integrations & Extensibility](contexts/integrations-extensibility.md)** - External system integration  
-- **[Tenant Management](contexts/tenant-management.md)** - Multi-tenant SaaS considerations
+### Frontend
+- **[Frontend Architecture](frontend/frontend-architecture.md)** - React SPA, components, and state management  
+- **[Mobile App Architecture](frontend/mobile-app-architecture.md)** - React Native app for participants
 
 ## 📝 Architecture Decisions (ADRs)
 
-Important architectural decisions are tracked in `architecture/decisions/`:
+Important architectural decisions are tracked in `backend/architecture-decisions/`:
 
-1. **[Clean Architecture](architecture/decisions/001-use-clean-architecture.md)** - Modular monolith approach
-2. **[Azure Media Services](architecture/decisions/002-azure-media-services.md)** - Video processing strategy
-3. **[Azure Communication Services](architecture/decisions/003-azure-communication-services.md)** - Email notifications
-4. **[Azure Cognitive Services](architecture/decisions/004-azure-cognitive-services.md)** - AI transcription
-5. **[Multi-Tenant Database](architecture/decisions/005-shared-db-composite-keys.md)** - Data isolation strategy
-6. **[Authentication Strategy](architecture/decisions/006-authentication-strategy.md)** - Multi-phase auth approach
-7. **[Self-Issued JWT Tokens](architecture/decisions/007-self-issued-jwt-tokens.md)** - Token format decision
+1. **[Clean Architecture](backend/architecture-decisions/001-use-clean-architecture.md)** - Modular monolith approach
+2. **[Azure Media Services](backend/architecture-decisions/002-azure-media-services.md)** - Video processing strategy
+3. **[Azure Communication Services](backend/architecture-decisions/003-azure-communication-services.md)** - Email notifications
+4. **[Azure Cognitive Services](backend/architecture-decisions/004-azure-cognitive-services.md)** - AI transcription
+5. **[Multi-Tenant Database](backend/architecture-decisions/005-shared-db-composite-keys.md)** - Data isolation strategy
+6. **[Authentication Strategy](backend/architecture-decisions/006-authentication-strategy.md)** - Multi-phase auth approach
+7. **[Self-Issued JWT Tokens](backend/architecture-decisions/007-self-issued-jwt-tokens.md)** - Token format decision
 
 ## 📚 Resources
 
@@ -67,11 +65,11 @@ Important architectural decisions are tracked in `architecture/decisions/`:
 | Set up development environment | [Getting Started](GETTING-STARTED.md) |
 | Understand what we're building | [System Overview](OVERVIEW.md) |
 | See what's implemented | [Implementation Status](implementation/status.md) |
-| Learn the architecture | [Backend](contexts/backend-architecture.md) + [Frontend](contexts/frontend-architecture.md) |
-| Understand the domain | [Domain Model](contexts/domain-model.md) |
-| Configure authentication | [Social Login Setup](implementation/social-login-setup.md) |
-| Deploy to Azure | [Infrastructure & DevOps](contexts/infrastructure-devops.md) |
-| Add a new feature | Check [ADRs](architecture/decisions/) + [Domain Model](contexts/domain-model.md) |
+| Learn the architecture | [Backend](backend/backend-architecture.md) + [Frontend](frontend/frontend-architecture.md) |
+| Understand the domain | [Domain Model](backend/domain-model.md) |
+| Configure authentication | [Social Login Setup](backend/implementation/social-login-setup.md) |
+| Deploy to Azure | [Infrastructure & DevOps](backend/infrastructure-devops.md) |
+| Add a new feature | Check [ADRs](backend/architecture-decisions/) + [Domain Model](backend/domain-model.md) |
 
 ## 📁 Directory Structure
 
@@ -79,20 +77,32 @@ Important architectural decisions are tracked in `architecture/decisions/`:
 docs/
 ├── README.md                    # This navigation guide
 ├── GETTING-STARTED.md          # Development setup
-├── OVERVIEW.md                 # System overview (renamed from context.md)
+├── OVERVIEW.md                 # System overview
 │
-├── architecture/               # Architectural decisions
-│   └── decisions/             # ADRs (Architecture Decision Records)
-│
-├── contexts/                  # Detailed architecture docs
-│   ├── backend-architecture.md
+├── frontend/                   # Frontend-specific documentation
 │   ├── frontend-architecture.md
-│   └── ...
+│   ├── mobile-app-architecture.md
+│   └── implementation/         # Frontend implementation guides
 │
-├── implementation/            # Implementation guides and status
+├── backend/                    # Backend-specific documentation
+│   ├── backend-architecture.md
+│   ├── domain-model.md
+│   ├── security-model.md
+│   ├── infrastructure-devops.md
+│   ├── analytics-insights.md
+│   ├── integrations-extensibility.md
+│   ├── tenant-management.md
+│   ├── TechStack.context.md
+│   ├── architecture-decisions/ # ADRs (Architecture Decision Records)
+│   └── implementation/         # Backend implementation guides
+│
+├── implementation/            # Cross-cutting implementation guides
 │   ├── status.md             # Current progress
 │   ├── roadmap.md            # Delivery phases
-│   └── ...
+│   └── phase-0-foundation.md
+│
+├── contexts/                  # Remaining general context docs
+│   └── project-kickstart.md
 │
 ├── setup/                    # Development setup guides
 └── templates/                # Documentation templates
