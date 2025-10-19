@@ -1,6 +1,6 @@
 # Online Communities & Insights SaaS Platform
 
-Multi-tenant SaaS platform for building online research communities with social login authentication.
+Multi-tenant SaaS platform for building online research communities with Microsoft Entra External ID authentication.
 
 ## Quick Start
 
@@ -10,6 +10,7 @@ git clone <your-repo-url>
 cd online-communities-and-insights
 
 # Build solution
+cd backend
 dotnet build
 
 # Run API
@@ -20,234 +21,191 @@ dotnet run
 curl https://localhost:5001/health
 ```
 
-## What's Built
+## What's Built (Phase 0 Complete ✅)
 
 ✅ **Clean Architecture** - Core, Application, Infrastructure, API layers  
-✅ **Social Login** - Google, GitHub, Microsoft Personal Accounts  
-✅ **JWT Authentication** - Secure API access tokens  
-✅ **Multi-Tenant** - Users can belong to multiple tenants with different roles  
-✅ **Flexible Auth Design** - Future-proof for email/password and enterprise SSO  
+✅ **Microsoft Entra External ID** - Enterprise-grade managed authentication  
+✅ **JWT Token Validation** - Secure API access with Microsoft-issued tokens  
+✅ **Multi-Tenant RBAC** - Users can belong to multiple tenants with different roles  
+✅ **Database & Repositories** - Entity Framework Core with SQL Server  
+✅ **74 Tests Passing** - Comprehensive unit and integration test coverage
 
 ## Authentication
 
-### Phase 2: Social Login (Current)
-Users log in with existing accounts:
-- **Google** - Gmail and Google Workspace personal accounts
-- **GitHub** - Developer accounts
-- **Microsoft** - Outlook.com, Hotmail.com accounts
-
-**No Microsoft Entra ID needed!** (That's Phase 3 for enterprise customers)
+### Microsoft Entra External ID
+Enterprise-grade managed authentication with:
+- Social identity providers (Google, GitHub, Microsoft accounts)
+- Email/password sign-up
+- Multi-factor authentication (MFA)
+- Custom claims for tenant and role context
+- SOC 2, FedRAMP, ISO 27001 compliance
 
 ### Authentication Flow
 
 ```
-User clicks "Sign in with Google"
+User signs in via Entra External ID
     ↓
-Redirects to Google OAuth
+Entra authenticates user
     ↓
-User authenticates
+Entra calls API Connector to enrich token
     ↓
-Google redirects back with user info
+Your API returns tenant ID and roles
     ↓
-Your API creates user record (JIT provisioning)
-    ↓
-Returns JWT token
+Entra issues JWT with custom claims
     ↓
 Frontend uses token for API calls
+    ↓
+Your API validates token signature and checks roles
 ```
 
 ## Project Structure
 
 ```
-src/
-├── Core/              # Domain entities, enums, interfaces
-├── Application/       # Business logic, services (ExternalAuthService)
-├── Infrastructure/    # Data access, repositories (stubs)
-└── Api/               # Web API, controllers, authentication
+backend/
+├── src/
+│   ├── Core/              # Domain entities, interfaces (no dependencies)
+│   ├── Application/       # Business logic, CQRS, services
+│   ├── Infrastructure/    # Data access, repositories, migrations
+│   └── Api/               # Web API, controllers, authorization
+├── tests/                 # Unit and integration tests
+└── OnlineCommunities.sln  # Solution file
+
+frontend/                  # React + Vite frontend application
 
 docs/
 ├── GETTING-STARTED.md           # Start here
-├── PROJECT-STRUCTURE.md         # Architecture details
-└── implementation/
-    └── social-login-setup.md    # OAuth setup guide
+├── OVERVIEW.md                  # System overview
+├── AZURE-CONFIGURATION-STEPS.md # Azure setup guide
+├── backend/                     # Backend documentation
+├── frontend/                    # Frontend documentation
+└── implementation/              # Implementation tracking
 ```
 
 ## Configuration
 
-### 1. Set Up OAuth Providers
+### Azure Setup Required
 
-**Google:**
-- Go to https://console.cloud.google.com/
-- Create OAuth 2.0 Client ID
-- Copy Client ID and Secret
+Before running the application, you need to configure Microsoft Entra External ID:
 
-**GitHub:**
-- Go to https://github.com/settings/developers
-- Create OAuth App
-- Copy Client ID and Secret
+1. **Create Entra External ID Tenant** - See `docs/AZURE-CONFIGURATION-STEPS.md`
+2. **Configure Custom Attributes** - TenantId and Roles for token enrichment
+3. **Set up API Connector** - For enriching tokens with tenant/role claims
+4. **Create Azure SQL Database** - For storing user and tenant data
 
-**Microsoft:**
-- Go to https://portal.azure.com
-- Create App Registration (Personal accounts only)
-- Copy Client ID and Secret
-
-### 2. Update appsettings.json
+### Update appsettings.json
 
 ```json
 {
-  "Authentication": {
-    "Google": {
-      "ClientId": "your-google-client-id",
-      "ClientSecret": "your-google-secret"
-    },
-    "GitHub": {
-      "ClientId": "your-github-client-id",
-      "ClientSecret": "your-github-secret"
-    },
-    "Microsoft": {
-      "ClientId": "your-microsoft-client-id",
-      "ClientSecret": "your-microsoft-secret"
-    }
+  "AzureAd": {
+    "Instance": "https://yourcompany.ciamlogin.com/",
+    "TenantId": "your-tenant-id-guid",
+    "ClientId": "your-client-id-guid",
+    "Audience": "your-client-id-guid"
   },
-  "JwtSettings": {
-    "SecretKey": "change-this-to-a-long-random-string-32-chars-minimum"
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=your-server.database.windows.net;Database=OnlineCommunities;..."
   }
 }
 ```
 
-See `appsettings.Example.json` for full template.
-
-### 3. Set Up Database (TODO)
-
-```bash
-# Install EF Core tools
-dotnet tool install --global dotnet-ef
-
-# Create DbContext (see docs/implementation/social-login-setup.md)
-
-# Run migrations
-dotnet ef migrations add InitialCreate --project src/Infrastructure --startup-project src/Api
-dotnet ef database update --project src/Infrastructure --startup-project src/Api
-```
-
-### 4. Implement UserRepository (TODO)
-
-Repository methods are stubbed. You need to:
-1. Create `ApplicationDbContext`
-2. Implement UserRepository methods
-3. Register in Program.cs
-
-See `src/Infrastructure/Repositories/UserRepository.cs` for TODOs.
+See `backend/src/Api/appsettings.Example.json` for full template.
 
 ## API Endpoints
 
 ### Authentication
-- `GET /api/auth/login/{provider}` - Initiate OAuth login (google, github, microsoft)
-- `GET /api/auth/callback/{provider}` - OAuth callback (redirects here after login)
-- `GET /api/auth/me` - Get current user (requires JWT token)
+- `GET /` - Landing page with API information
+- `GET /health` - Health check
+- `GET /api/auth/me` - Get current user profile (requires JWT token)
 - `GET /api/auth/status` - Check authentication status
-- `POST /api/auth/signout` - Sign out
+- `GET /api/auth/validate-token` - Validate JWT token
+- `POST /api/auth/signout` - Sign out (client-side token deletion)
+- `POST /api/entra-connector/token-enrichment` - Token enrichment for Entra (called by Microsoft)
 
-### Health Check
-- `GET /health` - API health status
+### Users
+- `GET /api/users/{id}` - Get user by ID
+- `POST /api/users` - Create new user
+- `PUT /api/users/{id}` - Update user
+- `DELETE /api/users/{id}` - Delete user
 
 ## Frontend Integration
 
-### React Example
+Frontend authentication uses MSAL (Microsoft Authentication Library) to integrate with Entra External ID:
 
-```tsx
-function LoginPage() {
-  const handleSocialLogin = (provider) => {
-    // Redirect to your API
-    window.location.href = `/api/auth/login/${provider}`;
-  };
+```typescript
+import { PublicClientApplication } from '@azure/msal-browser';
 
-  return (
-    <div>
-      <button onClick={() => handleSocialLogin('google')}>
-        Sign in with Google
-      </button>
-      <button onClick={() => handleSocialLogin('github')}>
-        Sign in with GitHub
-      </button>
-      <button onClick={() => handleSocialLogin('microsoft')}>
-        Sign in with Microsoft
-      </button>
-    </div>
-  );
-}
-```
+const msalConfig = {
+  auth: {
+    clientId: 'your-client-id',
+    authority: 'https://yourcompany.ciamlogin.com/yourcompany.onmicrosoft.com/b2c_1_signupsignin',
+    redirectUri: window.location.origin,
+  }
+};
 
-After login, API returns JWT token. Store it and use for API calls:
+const msalInstance = new PublicClientApplication(msalConfig);
 
-```tsx
-// Call authenticated endpoint
-const response = await fetch('/api/auth/me', {
+// Sign in
+await msalInstance.loginPopup();
+
+// Get access token
+const accounts = msalInstance.getAllAccounts();
+const response = await msalInstance.acquireTokenSilent({
+  scopes: ['openid', 'profile', 'email'],
+  account: accounts[0]
+});
+
+// Use token for API calls
+const apiResponse = await fetch('/api/auth/me', {
   headers: {
-    'Authorization': `Bearer ${jwtToken}`
+    'Authorization': `Bearer ${response.accessToken}`
   }
 });
 ```
 
 ## Documentation
 
-- **Getting Started**: `docs/GETTING-STARTED.md`
-- **Project Structure**: `docs/PROJECT-STRUCTURE.md`
-- **Social Login Setup**: `docs/implementation/social-login-setup.md`
-- **Architecture Decisions**: `docs/architecture/decisions/`
+- **Getting Started**: `docs/GETTING-STARTED.md` - Start here for development setup
+- **System Overview**: `docs/OVERVIEW.md` - Architecture and design
+- **Azure Setup**: `docs/AZURE-CONFIGURATION-STEPS.md` - Quick Azure configuration guide
+- **Backend Architecture**: `docs/backend/README.md` - Backend design and patterns
+- **CQRS Guide**: `docs/CQRS-IMPLEMENTATION-SUMMARY.md` - CQRS pattern implementation
+- **Implementation Status**: `docs/implementation/status.md` - Current progress
+- **Phase 0 Complete**: `docs/implementation/PHASE-0-COMPLETE.md` - Foundation summary
 
 ## Development Status
 
-- ✅ Clean Architecture scaffold
-- ✅ Social login authentication
-- ✅ JWT token generation
+### Phase 0: Foundation (✅ Complete)
+- ✅ Clean Architecture structure
+- ✅ Microsoft Entra External ID authentication
+- ✅ JWT token validation
 - ✅ Multi-tenant data model
-- ✅ Authorization framework
-- 🚧 Database setup (TODO)
-- 🚧 UserRepository implementation (TODO)
-- ⏳ Frontend (future)
-- ⏳ Email/password auth (Phase 1 - future)
-- ⏳ Enterprise SSO (Phase 3 - future)
+- ✅ Entity Framework Core with SQL Server
+- ✅ Repository pattern implementations
+- ✅ Authorization framework with custom policies
+- ✅ 74 unit and integration tests passing
+- ✅ CQRS implementation with custom mediator
+
+### Phase 1: Core Community Features (🚧 Next)
+- Frontend application with authentication
+- Community management
+- Content creation and engagement
+- Basic research tools
 
 ## Tech Stack
 
 - **.NET 9** - Web API framework
-- **ASP.NET Core Authentication** - OAuth 2.0 providers (Google, GitHub, Microsoft)
-- **JWT** - API authentication tokens
-- **Entity Framework Core** - Data access (to be implemented)
-- **SQL Server** - Database (to be implemented)
+- **Microsoft Entra External ID** - Managed authentication with social providers
+- **JWT Bearer** - Token validation
+- **Entity Framework Core 9** - Data access and migrations
+- **SQL Server** - Database
 - **Clean Architecture** - Separation of concerns
+- **CQRS Pattern** - Custom mediator implementation
 
-## Microsoft Entra Clarification
+## Next Steps
 
-**Microsoft Entra ID** (formerly Azure AD) = Enterprise workforce authentication (Phase 3 - future)  
-**Microsoft Entra External ID** (formerly Azure AD B2C) = Consumer authentication (Phase 1 option - future)  
-
-**Current Implementation:** Standard OAuth 2.0 (no Entra needed!)
-- ✅ Works with personal accounts (Gmail, Outlook, GitHub)
-- ✅ No Entra ID tenant management or creation
-- ✅ No MSAL library needed (that's for enterprise SSO)
-- ✅ Simple standard OAuth 2.0 flow
-- ✅ Your SaaS tenants are just database records
-
-**See `docs/AUTHENTICATION-STRATEGY.md` for complete clarification of Microsoft Entra terminology and authentication phases.**
-
-## Key Documentation
-
-Start here:
-1. **`IMPLEMENTATION-STATUS.md`** - Current status and what's implemented
-2. **`docs/AUTHENTICATION-STRATEGY.md`** - Microsoft Entra terminology clarified
-3. **`docs/GETTING-STARTED.md`** - Getting started guide
-4. **`docs/implementation/social-login-setup.md`** - OAuth setup instructions
-5. **`docs/PROJECT-STRUCTURE.md`** - Architecture details
-
-## Support
-
-For questions:
-- **Authentication confusion?** See `docs/AUTHENTICATION-STRATEGY.md`
-- **Getting started?** See `docs/GETTING-STARTED.md`
-- **OAuth setup?** See `docs/implementation/social-login-setup.md`
-- **Architecture questions?** See `docs/contexts/backend-architecture.md`
+1. **Configure Azure** - See `docs/AZURE-CONFIGURATION-STEPS.md`
+2. **Run Tests** - `cd backend && dotnet test`
+3. **Start Building** - Review `docs/implementation/roadmap.md` for Phase 1 features
 
 ## License
 

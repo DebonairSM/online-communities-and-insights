@@ -13,14 +13,25 @@ This roadmap outlines the phased approach to building the Insight Community Plat
 - [x] Development environment setup
 
 ### Authentication Foundation  
-- [x] OAuth 2.0 social login architecture
-- [x] JWT token generation and validation
-- [x] Multi-provider authentication support
-- [x] User entity with flexible auth methods
+- [x] Microsoft Entra External ID integration
+- [x] JWT Bearer token validation
+- [x] Custom claims enrichment via API Connector
+- [x] User entity with Entra External ID support
+- [x] Multi-tenant authorization framework
+
+### Database & Data Access
+- [x] Entity Framework Core with ApplicationDbContext
+- [x] User, Tenant, and TenantMembership entities
+- [x] Repository pattern implementations
+- [x] Database migrations
+
+### Testing & Quality
+- [x] 64 unit and integration tests passing
+- [x] Test coverage for core domain and services
 
 ## Phase 1: Core Community Platform
-**Timeline**: Months 1-3  
-**Status**: 🚧 In Progress (15% complete)
+**Timeline**: Months 2-4  
+**Status**: 📋 Planned (0% complete)
 
 ### Multi-Tenant Architecture
 - [ ] Tenant management system
@@ -199,7 +210,8 @@ This roadmap outlines the phased approach to building the Insight Community Plat
 ### Foundation Milestones
 - [x] **M0.1**: Project setup and architecture *(Complete)*
 - [x] **M0.2**: Authentication system *(Complete)*
-- [ ] **M1.1**: Database and API foundation *(In Progress)*
+- [x] **M0.3**: Database and API foundation *(Complete)*
+- [ ] **M1.1**: Frontend application with authentication
 - [ ] **M1.2**: Basic community features
 - [ ] **M1.3**: Content creation and engagement
 - [ ] **M1.4**: Simple research tools
@@ -235,8 +247,9 @@ This roadmap outlines the phased approach to building the Insight Community Plat
 ## Dependencies & Integrations
 
 ### Phase 1 Dependencies
+- Microsoft Entra External ID tenant configured
 - Azure SQL Database and App Services
-- OAuth provider configurations (Google, GitHub, Microsoft)
+- API Connector for token enrichment
 - Basic CI/CD pipeline
 
 ### Phase 2 Dependencies  

@@ -11,25 +11,28 @@ Welcome to the documentation for the **Insight Community Platform** - a comprehe
 ## 📋 Implementation
 
 ### Current Progress
-- **[Implementation Status](implementation/status.md)** - What's built and what's next
+- **[Implementation Status](implementation/status.md)** - What's built and what's next (Phase 0 Complete ✅)
+- **[Phase 0 Complete](implementation/PHASE-0-COMPLETE.md)** - Foundation completion summary
 - **[Implementation Roadmap](implementation/roadmap.md)** - Phased delivery plan
 
 ### Setup Guides  
+- **[Azure Configuration Steps](azure/AZURE-CONFIGURATION-STEPS.md)** - Quick start for Azure setup (START HERE)
+- **[Azure Setup Guide](setup/AZURE-SETUP-GUIDE.md)** - Detailed Microsoft Entra External ID configuration
 - **[Development Environment](setup/development-environment.md)** - Local development setup
 - **[Phase 0: Foundation](implementation/phase-0-foundation.md)** - Core architecture setup
-- **[Social Login Setup](backend/implementation/social-login-setup.md)** - OAuth configuration guide
 
 ## 🏗️ Architecture
 
 ### Backend
-- **[Backend Architecture](backend/backend-architecture.md)** - .NET services, APIs, and data strategy
+- **[Backend Architecture](backend/README.md)** - .NET services, APIs, and data strategy
 - **[Domain Model](backend/domain-model.md)** - Business entities and relationships
-- **[Security Model](backend/security-model.md)** - Authentication, authorization, and compliance
-- **[Infrastructure & DevOps](backend/infrastructure-devops.md)** - Azure deployment and operations
-- **[Analytics & Insights](backend/analytics-insights.md)** - Data pipeline and reporting
-- **[Tech Stack](backend/TechStack.context.md)** - Complete technology choices and packages
-- **[Integrations & Extensibility](backend/integrations-extensibility.md)** - External system integration  
-- **[Tenant Management](backend/tenant-management.md)** - Multi-tenant SaaS considerations
+- **[Authentication](backend/authentication.md)** - Security, authorization, and compliance
+- **[Infrastructure](backend/infrastructure.md)** - Azure deployment and operations
+- **[Analytics](backend/analytics.md)** - Data pipeline and reporting
+- **[Tech Stack](backend/tech-stack.md)** - Technology choices and packages
+- **[Integrations](backend/integrations.md)** - External system integration  
+- **[Multi-Tenancy](backend/multi-tenancy.md)** - Multi-tenant architecture
+- **[Architecture Decisions](backend/architecture-decisions.md)** - Key architectural choices
 
 ### Frontend
 - **[Frontend Architecture](frontend/frontend-architecture.md)** - React SPA, components, and state management  
@@ -37,17 +40,32 @@ Welcome to the documentation for the **Insight Community Platform** - a comprehe
 
 ## 📝 Architecture Decisions (ADRs)
 
-Important architectural decisions are tracked in `backend/architecture-decisions/`:
+Important architectural decisions are documented in **[Architecture Decisions](backend/architecture-decisions.md)**:
 
-1. **[Clean Architecture](backend/architecture-decisions/001-use-clean-architecture.md)** - Modular monolith approach
-2. **[Azure Media Services](backend/architecture-decisions/002-azure-media-services.md)** - Video processing strategy
-3. **[Azure Communication Services](backend/architecture-decisions/003-azure-communication-services.md)** - Email notifications
-4. **[Azure Cognitive Services](backend/architecture-decisions/004-azure-cognitive-services.md)** - AI transcription
-5. **[Multi-Tenant Database](backend/architecture-decisions/005-shared-db-composite-keys.md)** - Data isolation strategy
-6. **[Authentication Strategy](backend/architecture-decisions/006-authentication-strategy.md)** - Multi-phase auth approach
-7. **[Self-Issued JWT Tokens](backend/architecture-decisions/007-self-issued-jwt-tokens.md)** - Token format decision
+1. **Clean Architecture** - Modular monolith approach with clear layer separation
+2. **Azure Media Services** - Video processing strategy
+3. **Azure Communication Services** - Email and SMS notifications
+4. **Azure Cognitive Services** - AI transcription and sentiment analysis
+5. **Multi-Tenant Database** - Shared database with composite keys for isolation
+6. **Authentication Strategy** - Microsoft Entra External ID for managed authentication
+7. **Token Validation** - Microsoft-issued JWT tokens with custom claims
+8. **OAuth Migration** - Removed self-issued JWTs in favor of Entra External ID exclusively
 
 ## 📚 Resources
+
+### Azure Configuration
+- **[Azure Configuration Steps](azure/AZURE-CONFIGURATION-STEPS.md)** - Quick start for Azure setup
+- **[Entra Roles Setup](azure/AZURE-ENTRA-ROLES-SETUP.md)** - Custom attributes and roles configuration
+- **[Token Enrichment Quick Reference](azure/ENTRA-TOKEN-ENRICHMENT-QUICK-REFERENCE.md)** - Hard-to-find token enrichment details
+
+### Feature Guides
+- **[Chat Feature Guide](features/CHAT-FEATURE-GUIDE.md)** - Real-time chat implementation
+- **[Demo Script](features/DEMO-SCRIPT.md)** - Platform demonstration walkthrough
+
+### Implementation Guides
+- **[CQRS Implementation Summary](guides/CQRS-IMPLEMENTATION-SUMMARY.md)** - Command Query Responsibility Segregation
+- **[Implementation Summary](guides/IMPLEMENTATION-SUMMARY.md)** - Overall implementation overview
+- **[Documentation Cleanup Summary](guides/DOCUMENTATION-CLEANUP-SUMMARY.md)** - Documentation organization
 
 ### Templates
 - **[ADR Template](templates/adr-template.md)** - Architecture decision format
@@ -65,10 +83,10 @@ Important architectural decisions are tracked in `backend/architecture-decisions
 | Set up development environment | [Getting Started](GETTING-STARTED.md) |
 | Understand what we're building | [System Overview](OVERVIEW.md) |
 | See what's implemented | [Implementation Status](implementation/status.md) |
-| Learn the architecture | [Backend](backend/backend-architecture.md) + [Frontend](frontend/frontend-architecture.md) |
+| Learn the architecture | [Backend](backend/README.md) + [Frontend](frontend/frontend-architecture.md) |
 | Understand the domain | [Domain Model](backend/domain-model.md) |
-| Configure authentication | [Social Login Setup](backend/implementation/social-login-setup.md) |
-| Deploy to Azure | [Infrastructure & DevOps](backend/infrastructure-devops.md) |
+| Configure authentication | [Azure Configuration Steps](azure/AZURE-CONFIGURATION-STEPS.md) |
+| Deploy to Azure | [Infrastructure](backend/infrastructure.md) |
 | Add a new feature | Check [ADRs](backend/architecture-decisions/) + [Domain Model](backend/domain-model.md) |
 
 ## 📁 Directory Structure
@@ -78,6 +96,21 @@ docs/
 ├── README.md                    # This navigation guide
 ├── GETTING-STARTED.md          # Development setup
 ├── OVERVIEW.md                 # System overview
+├── QUICK-START.md              # Quick start guide
+│
+├── azure/                      # Azure configuration guides
+│   ├── AZURE-CONFIGURATION-STEPS.md
+│   ├── AZURE-ENTRA-ROLES-SETUP.md
+│   └── ENTRA-TOKEN-ENRICHMENT-QUICK-REFERENCE.md
+│
+├── features/                   # Feature-specific guides
+│   ├── CHAT-FEATURE-GUIDE.md
+│   └── DEMO-SCRIPT.md
+│
+├── guides/                     # Implementation guides
+│   ├── CQRS-IMPLEMENTATION-SUMMARY.md
+│   ├── IMPLEMENTATION-SUMMARY.md
+│   └── DOCUMENTATION-CLEANUP-SUMMARY.md
 │
 ├── frontend/                   # Frontend-specific documentation
 │   ├── frontend-architecture.md
@@ -85,23 +118,22 @@ docs/
 │   └── implementation/         # Frontend implementation guides
 │
 ├── backend/                    # Backend-specific documentation
-│   ├── backend-architecture.md
+│   ├── README.md
+│   ├── architecture-decisions.md
+│   ├── authentication.md
 │   ├── domain-model.md
-│   ├── security-model.md
-│   ├── infrastructure-devops.md
-│   ├── analytics-insights.md
-│   ├── integrations-extensibility.md
-│   ├── tenant-management.md
-│   ├── TechStack.context.md
-│   ├── architecture-decisions/ # ADRs (Architecture Decision Records)
-│   └── implementation/         # Backend implementation guides
+│   ├── infrastructure.md
+│   ├── analytics.md
+│   ├── integrations.md
+│   ├── multi-tenancy.md
+│   └── tech-stack.md
 │
 ├── implementation/            # Cross-cutting implementation guides
 │   ├── status.md             # Current progress
 │   ├── roadmap.md            # Delivery phases
 │   └── phase-0-foundation.md
 │
-├── contexts/                  # Remaining general context docs
+├── contexts/                  # General context docs
 │   └── project-kickstart.md
 │
 ├── setup/                    # Development setup guides

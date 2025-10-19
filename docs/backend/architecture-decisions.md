@@ -11,11 +11,11 @@
 - API layer handles HTTP concerns
 
 ```csharp
-src/
+backend/src/
 ├── Core/           # Domain entities, interfaces
 ├── Application/    # Business logic, use cases  
 ├── Infrastructure/ # Data access, external services
-└── Api/           # Controllers, middleware
+└── Api/            # Controllers, middleware
 ```
 
 ## ADR-002: Azure Media Services
@@ -60,3 +60,30 @@ CREATE TABLE Communities (
 **Decision**: Use Microsoft Entra External ID issued JWT tokens exclusively for authentication.
 
 **Rationale**: Enterprise-grade security, compliance certifications (SOC 2, FedRAMP, ISO 27001), managed token lifecycle, and built-in threat protection. Custom claims (tenant, roles) are enriched via API Connector during token issuance.
+
+## ADR-008: Migration from OAuth Social Login to Entra External ID Only
+
+**Decision**: Remove OAuth 2.0 social login implementation and use only Microsoft Entra External ID for authentication.
+
+**Context**: Originally planned to support Google, GitHub, and Microsoft Personal Account OAuth providers alongside Entra External ID.
+
+**Decision**: Use only Microsoft Entra External ID for all authentication needs.
+
+**Rationale**: 
+- **Compliance**: Entra External ID provides SOC 2, FedRAMP, and ISO 27001 compliance out of the box
+- **Security**: Managed threat protection, MFA support, and breach detection
+- **Simplification**: Reduces codebase complexity and maintenance overhead
+- **Enterprise Focus**: Aligns with target market of enterprise customers
+- **Custom Claims**: Better support for tenant and role management through API Connectors
+
+**Implementation**:
+- Removed ExternalAuthService and OAuth callback endpoints
+- Removed self-issued JWT token generation
+- Configured JWT Bearer authentication to validate only Entra External ID tokens
+- Updated ClaimsPrincipalExtensions to work only with Entra External ID claim format
+
+**Removed Components**:
+- `ExternalAuthService.cs` and `IExternalAuthService.cs`
+- OAuth callback endpoints in `AuthController.cs`
+- Self-issued JWT configuration and secret key management
+- OAuth provider configurations in `appsettings.json`

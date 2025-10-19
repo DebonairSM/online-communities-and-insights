@@ -19,7 +19,7 @@ This platform is an **Insight Community Platform** modeled after C Space, design
 ## User Personas
 
 ### Research Participant (Community Member)
-End users recruited for research studies who complete tasks, respond to surveys, share media diaries, participate in discussions, and provide authentic insights. Authentication via social login (Google, GitHub, Microsoft personal accounts) or email/password (future). Compensated through incentive systems (points, gift cards). Privacy-conscious with explicit consent for each study.
+End users recruited for research studies who complete tasks, respond to surveys, share media diaries, participate in discussions, and provide authentic insights. Authentication via Microsoft Entra External ID (supports Google, GitHub, Microsoft accounts, and email/password). Compensated through incentive systems (points, gift cards). Privacy-conscious with explicit consent for each study.
 
 ### Moderator / Facilitator
 Trained research professionals who guide discussions, prompt deeper responses, maintain community guidelines, and ensure quality contributions. Responsible for creating a safe, trusted environment. Can approve/reject content, manage participants, and tag responses with research themes. Often have qualitative research backgrounds.
@@ -89,8 +89,8 @@ Internal staff who provision brand communities, manage infrastructure, ensure co
 - Accessibility and localization support
 
 ### Backend Layer
-Modular monolith built on .NET 9+ with clear service boundaries:
-- **Authentication**: OAuth 2.0 social login with JWT tokens, flexible multi-provider support
+Modular monolith built on .NET 9 with clear service boundaries:
+- **Authentication**: Microsoft Entra External ID with JWT token validation and custom claims enrichment
 - **Research Engine**: Survey/poll/diary/interview management with quota enforcement
 - **Media Processing**: Video transcoding, image annotation, auto-transcription (Azure AI Services)
 - **Moderation Service**: Content review queues, quality scoring, safety filters
@@ -117,7 +117,7 @@ Azure-hosted with research-specific considerations:
 - **Runtime**: .NET 9
 - **API Framework**: ASP.NET Core Web API
 - **ORM**: Entity Framework Core 9
-- **Authentication**: OAuth 2.0 (Google, GitHub, Microsoft) + JWT tokens
+- **Authentication**: Microsoft Entra External ID with JWT Bearer validation
 - **Messaging**: Azure Service Bus
 - **Caching**: StackExchange.Redis
 - **Testing**: xUnit, FluentAssertions, Moq
@@ -131,7 +131,7 @@ Azure-hosted with research-specific considerations:
 - **Build**: Vite
 - **Rich Text**: TipTap or ProseMirror for qualitative responses
 - **Media**: React-Player for video playback, Fabric.js for image annotation
-- **Authentication**: Standard OAuth 2.0 flows (no MSAL for social login)
+- **Authentication**: MSAL (Microsoft Authentication Library) for Entra External ID
 
 ### Mobile Frontend
 - **Framework**: React Native (cross-platform iOS/Android) or Flutter
@@ -194,10 +194,9 @@ Azure-hosted with research-specific considerations:
 - **Secure Video Storage**: SFTP/REST ingestion for large ethnographic video datasets
 
 ### Authentication Integration
-- **Phase 2 (Current)**: OAuth 2.0 social login (Google, GitHub, Microsoft personal accounts)
-- **Phase 1 (Future)**: Email/password with optional Microsoft Entra External ID for managed auth
-- **Phase 3 (Future)**: Enterprise SSO via Microsoft Entra ID (multi-tenant), Okta, Auth0, SAML 2.0
-- Per-brand authentication configuration
+- **Current**: Microsoft Entra External ID (supports Google, GitHub, Microsoft personal accounts, email/password)
+- **Future**: Enterprise SSO via Microsoft Entra ID (B2B multi-tenant), Okta, Auth0, SAML 2.0
+- Per-brand authentication configuration and branding
 
 ## Compliance & Security Principles
 
@@ -280,14 +279,23 @@ The architecture includes the following extension mechanisms:
 
 ## Next Steps
 
-Refer to domain-specific context documents in `docs/contexts/` for detailed architectural specifications:
-- `backend-architecture.md` - Research Engine, moderation, insight workspace, API design
-- `frontend-architecture.md` - Web UI components, moderation dashboards, coding tools
-- `mobile-app-architecture.md` - Native apps for iOS/Android, offline sync, media capture
-- `infrastructure-devops.md` - Azure deployment, CI/CD, monitoring, disaster recovery
-- `analytics-insights.md` - Mixed-method reporting, insight stories, qual+quant integration
-- `domain-model.md` - Research entities, consent, incentives, themes, focus groups
-- `security-model.md` - Research ethics, consent management, media anonymization
-- `integrations-extensibility.md` - Research tool exports, transcription, qual software integration
-- `tenant-management.md` - Brand community lifecycle, campaign billing, moderator assignment
-- `project-kickstart.md` - C Space-style platform implementation roadmap
+Refer to domain-specific documentation for detailed specifications:
+
+### Getting Started
+- **[Getting Started Guide](GETTING-STARTED.md)** - Development environment setup
+- **[Azure Configuration](AZURE-CONFIGURATION-STEPS.md)** - Microsoft Entra External ID setup
+
+### Architecture Documentation
+- **[Backend Architecture](backend/README.md)** - Services, APIs, and data strategy
+- **[Frontend Architecture](frontend/frontend-architecture.md)** - Web UI components and state management
+- **[Mobile App Architecture](frontend/mobile-app-architecture.md)** - Native apps, offline sync, media capture
+- **[Domain Model](backend/domain-model.md)** - Research entities and relationships
+- **[Authentication](backend/authentication.md)** - Security and authorization
+- **[Infrastructure](backend/infrastructure.md)** - Azure deployment and DevOps
+- **[Analytics](backend/analytics.md)** - Data pipeline and reporting
+- **[Integrations](backend/integrations.md)** - External system integration
+
+### Implementation Guides
+- **[Implementation Status](implementation/status.md)** - Current progress
+- **[Phase 0 Complete](implementation/PHASE-0-COMPLETE.md)** - Foundation summary
+- **[Roadmap](implementation/roadmap.md)** - Phased delivery plan

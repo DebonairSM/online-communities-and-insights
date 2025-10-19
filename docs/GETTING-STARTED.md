@@ -4,9 +4,9 @@
 
 A multi-tenant SaaS application for building online research communities, built with:
 - **Backend:** ASP.NET Core 9 (Clean Architecture)
-- **Authentication:** OAuth 2.0 Social Login (Google, GitHub, Microsoft)
+- **Authentication:** Microsoft Entra External ID (enterprise-grade managed authentication)
 - **Database:** SQL Server with Entity Framework Core
-- **Authorization:** Role-based access control (stored in YOUR database)
+- **Authorization:** Multi-tenant role-based access control
 
 ## Quick Start
 
@@ -21,7 +21,7 @@ dotnet build
 ### 2. Run the API
 
 ```bash
-cd src/Api
+cd backend/src/Api
 dotnet run
 ```
 
@@ -30,16 +30,21 @@ Visit: http://localhost:5000/health
 ### 3. Project Structure
 
 ```
-src/
-├── Core/              # Domain entities, interfaces (no dependencies)
-├── Application/       # Business logic, services
-├── Infrastructure/    # Data access, external services
-└── Api/               # Web API, controllers, middleware
+backend/
+├── src/
+│   ├── Core/              # Domain entities, interfaces (no dependencies)
+│   ├── Application/       # Business logic, services
+│   ├── Infrastructure/    # Data access, external services
+│   └── Api/               # Web API, controllers, middleware
+├── tests/                 # Unit and integration tests
+└── OnlineCommunities.sln  # Solution file
+
+frontend/                  # Frontend application
 
 docs/
-├── contexts/          # Domain and architecture contexts
-├── implementation/    # Implementation guides
-└── architecture/      # Architecture decision records
+├── contexts/              # Domain and architecture contexts
+├── implementation/        # Implementation guides
+└── architecture/          # Architecture decision records
 ```
 
 ## Architecture Overview
@@ -76,21 +81,24 @@ User "Bob"
 
 ## Authentication Strategy
 
-### Phase 1: Email/Password (Future)
-Traditional registration with username and password.
+### Current: Microsoft Entra External ID
+Enterprise-grade managed authentication with:
+- Social identity providers (Google, GitHub, Microsoft Personal Accounts)
+- Email/password sign-up
+- Multi-factor authentication (MFA)
+- Compliance certifications (SOC 2, FedRAMP, ISO 27001)
+- Custom claims for tenant and role context
 
-### Phase 2: Social Login (Current Implementation)
-Users log in with existing accounts:
-- Google (users@gmail.com)
-- GitHub (developers)
-- Microsoft Personal Accounts (outlook.com, hotmail.com)
+**Benefits:**
+- No password management in your database
+- Built-in breach detection and threat protection
+- Automatic token lifecycle management
+- Scalable to millions of users
 
-**No Microsoft Entra ID (Azure AD) tenants needed!**
-
-### Phase 3: Enterprise SSO (Future)
-When enterprise customers request it:
-- Microsoft Entra ID (work accounts)
-- Okta
+### Future: Enterprise SSO
+Additional enterprise authentication options:
+- Microsoft Entra ID (work accounts) for B2B scenarios
+- Okta, Auth0
 - Custom SAML providers
 
 ## Key Concepts
@@ -105,8 +113,8 @@ No Azure/Entra ID involved - just a database record!
 ### User
 A person who uses your app:
 ```sql
-INSERT INTO Users (Email, ExternalLoginProvider, ExternalUserId)
-VALUES ('alice@gmail.com', 'Google', 'google-user-id-123');
+INSERT INTO Users (Email, EntraIdSubject, AuthMethod)
+VALUES ('alice@gmail.com', 'entra-oid-guid', 'EntraExternalId');
 ```
 
 ### TenantMembership
@@ -116,56 +124,58 @@ INSERT INTO TenantMemberships (UserId, TenantId, RoleName)
 VALUES (alice_id, acme_tenant_id, 'Admin');
 ```
 
-## Authentication Flow (Social Login)
+## Authentication Flow (Microsoft Entra External ID)
 
 ```
-1. User clicks "Sign in with Google"
-2. Redirects to Google OAuth
-3. User authenticates with Google
-4. Google redirects back with user info
-5. Your API:
-   - Creates user record if doesn't exist (JIT provisioning)
-   - Issues JWT token for API access
-6. User calls API with JWT token
-7. Authorization checks roles in YOUR database
+1. User clicks "Sign in" on your frontend
+2. Redirects to Microsoft Entra External ID
+3. User chooses authentication method (Google, GitHub, Microsoft, Email)
+4. Entra authenticates the user
+5. Entra calls your API Connector to enrich token with tenant/role claims
+6. Your API returns tenant ID and roles from YOUR database
+7. Entra includes custom claims in JWT token
+8. User calls API with Entra-issued JWT token
+9. Your API validates token signature and checks roles
 ```
 
 ## Next Steps
 
-1. **Set up OAuth providers:** See `docs/implementation/social-login-setup.md`
-2. **Configure database:** See `docs/setup/development-environment.md`
-3. **Understand domain model:** See `docs/contexts/domain-model.md`
-4. **Review architecture:** See `docs/contexts/backend-architecture.md`
+1. **Configure Azure:** See `AZURE-CONFIGURATION-STEPS.md` in docs folder
+2. **Set up development environment:** See `docs/setup/development-environment.md`
+3. **Understand domain model:** See `docs/backend/domain-model.md`
+4. **Review architecture:** See `docs/backend/README.md`
 
 ## Common Questions
 
-**Q: Do I need Azure Entra ID?**  
-A: No! Not for social login. Entra ID is only needed for enterprise SSO (Phase 3).
+**Q: Do I need to configure Azure?**  
+A: Yes! You need to set up Microsoft Entra External ID tenant, app registration, and custom attributes. See `docs/AZURE-CONFIGURATION-STEPS.md`.
 
 **Q: Where do users' passwords live?**  
-A: They don't! Users authenticate with Google/GitHub/Microsoft. No passwords stored.
+A: In Microsoft Entra External ID. Your database only stores user references and tenant relationships.
 
 **Q: How do I create a new tenant?**  
-A: Just insert a record in the Tenants table. No Azure provisioning needed.
+A: Insert a record in the Tenants table. The tenant/role information is added to user tokens via API Connector.
 
 **Q: What about MSAL?**  
-A: MSAL is only for Entra ID (Phase 3). Use standard OAuth 2.0 for social login.
+A: MSAL is used on the frontend to handle Entra External ID authentication flows.
 
 ## Project Status
 
 - ✅ Clean Architecture scaffold
 - ✅ Multi-tenant data model
-- ✅ Authorization framework (roles in database)
-- 🚧 Social login authentication (in progress)
-- ⏳ Database and EF Core setup
+- ✅ Authorization framework with custom policies
+- ✅ Microsoft Entra External ID authentication
+- ✅ Database and EF Core setup
+- ✅ 64 tests passing (unit + integration)
 - ⏳ Frontend implementation
-- ⏳ Deployment configuration
+- ⏳ Azure deployment configuration
 
 ## Support Documentation
 
 - **Implementation Guides:** `docs/implementation/`
-- **Architecture Decisions:** `docs/architecture/decisions/`
-- **Context Documents:** `docs/contexts/`
+- **Architecture Decisions:** `docs/backend/architecture-decisions.md`
+- **Backend Documentation:** `docs/backend/`
+- **Frontend Documentation:** `docs/frontend/`
 - **Templates:** `docs/templates/`
 
 ---
